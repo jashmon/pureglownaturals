@@ -38,6 +38,31 @@ function saveCart(){ localStorage.setItem('pg_cart', JSON.stringify(state.cart))
 const money = n => `$${n.toFixed(2)}`;
 function pushEvent(name, payload = {}) {
   window.dataLayer.push({event:name, ...payload});
+  if (typeof window.gtag !== 'function') return;
+
+  const params = {...payload};
+  const product = PRODUCTS.find(item => item.id === payload.item_id);
+  if ((name === 'add_to_cart' || name === 'view_item') && product) {
+    params.currency = 'USD';
+    params.value = product.price;
+    params.items = [{
+      item_id: product.id,
+      item_name: product.name,
+      item_category: product.category,
+      price: product.price,
+      quantity: 1
+    }];
+    delete params.item_id;
+  } else if (name === 'view_cart') {
+    params.currency = 'USD';
+    params.items = state.cart.map(item => ({
+      item_id: item.id,
+      item_name: item.name,
+      price: item.price,
+      quantity: item.qty
+    }));
+  }
+  window.gtag('event', name, params);
 }
 
 /* ---------- Nav ---------- */

@@ -5,25 +5,24 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 /* ---------- Data (extendable) ---------- */
 const PRODUCTS = [
-  {id:'spf', name:'Daily Mineral SPF 30', price:22, rating:4.4, category:'spf',
-   image:'assets/images/product-img1.png', badges:['reef-safe'], skin:['all'],
-   concerns:['aging'], description:'Broad-spectrum mineral sunscreen, no white cast.',
+  {id:'spf', name:'Daily Mineral SPF 30', price:22, category:'spf',
+   image:'assets/images/product-img1.webp', badges:['mineral SPF'], skin:['all'],
+   concerns:['aging'], description:'Mineral SPF 30 formula. Product labeling and directions must be confirmed before launch.',
    ingredients:['Zinc Oxide','Caprylic/Capric Triglyceride','Aloe Barbadensis Leaf Juice']},
-    {id:'cleanser', name:'Radiance Cleanser', price:18, rating:4.6, category:'cleanser',
-   image:'assets/images/product-img5.png', badges:['vegan'], skin:['dry','combo','sensitive'],
+    {id:'cleanser', name:'Radiance Cleanser', price:18, category:'cleanser',
+   image:'assets/images/product-img5.webp', badges:['cleanser'], skin:['dry','combo','sensitive'],
    concerns:['dullness'], description:'Gentle gel cleanser with green tea & aloe.',
    ingredients:['Aqua','Glycerin','Camellia Sinensis Leaf Extract','Aloe Barbadensis Leaf Juice','Coco-Glucoside']},
-  {id:'toner', name:'HydraMist Toner', price:16, rating:4.5, category:'toner',
-   image:'assets/images/product-img3.png', badges:['fragrance-free'], skin:['dry','sensitive'],
+  {id:'toner', name:'HydraMist Toner', price:16, category:'toner',
+   image:'assets/images/product-img3.webp', badges:['toner'], skin:['dry','sensitive'],
    concerns:['dullness'], description:'pH-balancing mist with hyaluronic acid.',
    ingredients:['Aqua','Sodium Hyaluronate','Panthenol','Allantoin']},
-  {id:'serum', name:'Renew Serum', price:28, rating:4.7, category:'serum',
-   image:'assets/images/product-img4.png', badges:['vegan'], skin:['oily','combo','sensitive'],
+  {id:'serum', name:'Renew Serum', price:28, category:'serum',
+   image:'assets/images/product-img4.webp', badges:['5% niacinamide'], skin:['oily','combo','sensitive'],
    concerns:['acne','aging'], description:'Niacinamide + zinc for clarity and bounce.',
    ingredients:['Aqua','Niacinamide (5%)','Zinc PCA','Glycerin','Betaine']},
-  ,
-  {id:'kit', name:'Eco Starter Kit', price:39, rating:4.8, category:'kit',
-   image:'assets/images/product-img6.png', badges:['bundle','best-seller'], skin:['all'],
+  {id:'kit', name:'Eco Starter Kit', price:39, category:'kit',
+   image:'assets/images/product-img6.webp', badges:['bundle'], skin:['all'],
    concerns:['dullness','acne'], description:'Cleanser + Toner + Serum — easy switch to clean skincare.',
    ingredients:['See individual products']}
 ];
@@ -105,7 +104,6 @@ function pushEvent(name, payload = {}) {
     const s = sortSelect.value;
     if(s==='price-asc') out.sort((a,b)=>a.price-b.price);
     if(s==='price-desc') out.sort((a,b)=>b.price-a.price);
-    if(s==='rating-desc') out.sort((a,b)=>b.rating-a.rating);
 
     grid.innerHTML = out.map(cardHTML).join('');
     bindProductCards(grid);
@@ -131,7 +129,7 @@ function cardHTML(p){
     <img src="${p.image}" alt="${p.name}" loading="lazy">
     <div class="p-body">
       <div class="p-title">${p.name}</div>
-      <div class="p-meta"><span>${money(p.price)}</span><span>★ ${p.rating}</span></div>
+      <div class="p-meta"><span>${money(p.price)}</span><span>${p.category}</span></div>
       <ul class="badges">${p.badges.map(b=>`<li class="badge">${b}</li>`).join('')}</ul>
       <div class="p-actions" style="margin-top:.5rem; display:flex; gap:.5rem;">
         <button class="btn btn-primary" data-add="${p.id}">Add to Bag</button>
@@ -174,26 +172,14 @@ function openProductModal(id){
       <img src="${p.image}" alt="${p.name}">
       <div>
         <h2>${p.name}</h2>
-        <p class="tiny">Rating: ★ ${p.rating}</p>
+        <p class="tiny">Demo product listing. Confirm product information and price before launch.</p>
         <p>${p.description}</p>
         <p><strong>${money(p.price)}</strong></p>
-        <h3>Ingredients (INCI)</h3>
+        <h3>Listed ingredients (demo data)</h3>
         <ul>${p.ingredients.map(i=>`<li>${i}</li>`).join('')}</ul>
         <button class="btn btn-primary" data-add="${p.id}">Add to Bag</button>
       </div>
     </div>
-    <script type="application/ld+json">
-    {
-      "@context":"https://schema.org/",
-      "@type":"Product",
-      "name":"${p.name}",
-      "image":"${location.origin}/${p.image}",
-      "brand":{"@type":"Brand","name":"PureGlow Naturals"},
-      "sku":"${p.id}",
-      "description":"${p.description}",
-      "offers":{"@type":"Offer","priceCurrency":"USD","price":"${p.price}","availability":"https://schema.org/InStock"}
-    }
-    </script>
   `;
   productModal.showModal();
   bindProductCards(productModal);
@@ -257,8 +243,9 @@ function updateCartUI(){
 updateCartUI();
 
 $('#beginCheckout')?.addEventListener('click', ()=>{
-  alert('Checkout demo:\n1) Shipping\n2) Payment\n3) Review & Place Order');
-  pushEvent('begin_checkout', {value: state.subtotal});
+  const notice = $('#checkoutDemoNotice');
+  if (notice) notice.textContent = 'This demo does not process orders or payments.';
+  pushEvent('view_cart', {value: state.subtotal});
 });
 
 /* ---------- Newsletter ---------- */
@@ -267,10 +254,7 @@ $('#newsletterForm')?.addEventListener('submit', e=>{
   const email = $('#newsletterEmail').value.trim();
   const msg = $('#newsletterMsg');
   if(!/^\S+@\S+\.\S+$/.test(email)){ msg.textContent = 'Enter a valid email.'; return; }
-  const list = JSON.parse(localStorage.getItem('pg_newsletter') || '[]');
-  if(!list.includes(email)){ list.push(email); localStorage.setItem('pg_newsletter', JSON.stringify(list)); }
-  msg.textContent = 'Thanks! You are subscribed.'; $('#newsletterEmail').value='';
-  pushEvent('generate_lead', {email});
+  msg.textContent = 'Newsletter signup is not connected on this demo site.';
 });
 
 /* ---------- Contact form ---------- */
@@ -278,17 +262,16 @@ $('#contactForm')?.addEventListener('submit', e=>{
   e.preventDefault();
   const form = e.currentTarget;
   const out = {
-    name: form.name.value.trim(),
-    email: form.email.value.trim(),
-    topic: form.topic.value,
-    message: form.message.value.trim()
+    name: form.elements.namedItem('name').value.trim(),
+    email: form.elements.namedItem('email').value.trim(),
+    topic: form.elements.namedItem('topic').value,
+    message: form.elements.namedItem('message').value.trim()
   };
   const msg = $('#contactMsg');
   if(!out.name || !/^\S+@\S+\.\S+$/.test(out.email) || !out.topic || !out.message){
     msg.textContent = 'Please complete all fields with valid information.'; return;
   }
-  msg.textContent = 'Thanks — we will reply within 1–2 business days.';
-  form.reset();
+  msg.textContent = 'Demo form only. No message was sent.';
 });
 
 /* ---------- FAQ accordion ---------- */
